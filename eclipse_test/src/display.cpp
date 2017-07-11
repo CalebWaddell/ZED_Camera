@@ -31,6 +31,7 @@
 #include <sl/defines.hpp>
 
 #include <math.h>
+#include <pthread.h>
 
 using namespace sl;
 using namespace cv;
@@ -39,6 +40,21 @@ cv::Mat slMat2cvMat(sl::Mat& input);
 void detectObjects(cv::Mat* thresh_img, cv::Mat* orig_img, int type);
 void isolateLine(cv::Mat* thresh_img, cv::Mat* orig_img, int type);
 void findLinePos(cv::Mat* thresh_img, cv::Mat* orig_img, cv::Point correction);
+
+void *task1(void *zed){
+	sl::Camera *zed2;
+	zed2 = (sl::Camera *)zed;
+	//std::cout << "Task 1 Run" << std::endl;
+    // Set runtime parameters after opening the camera
+    RuntimeParameters runtime_parameters;
+    runtime_parameters.sensing_mode = SENSING_MODE_STANDARD; // Use STANDARD sensing mode
+	while(1){
+		std::cout << "Task 1 Run" << std::endl;
+		zed2->grab(runtime_parameters);
+		//usleep(10000);
+	}
+	return NULL;
+}
 
 enum {
 	TYPE_CLOSE = 1,
@@ -161,7 +177,7 @@ int main(int argc, char **argv) {
 
     // Give a name to OpenCV Windows
     cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
-    cv::namedWindow("Line Thresh", cv::WINDOW_AUTOSIZE);
+    //cv::namedWindow("Line Thresh", cv::WINDOW_AUTOSIZE);
     //cv::namedWindow("CLOSE", cv::WINDOW_AUTOSIZE);
     //cv::namedWindow("MEDIUM", cv::WINDOW_AUTOSIZE);
     //cv::namedWindow("FAR", cv::WINDOW_AUTOSIZE);
@@ -174,9 +190,9 @@ int main(int argc, char **argv) {
 //    createTrackbar("MIN_BLUE_V","Line Thresh",&MIN_BLUE_V,255);
 //    createTrackbar("MAX_BLUE_V","Line Thresh",&MAX_BLUE_V,255);
 
-    createTrackbar("THRESH","Image",&hough_thresh,255);
-	createTrackbar("MIN LINE LENGTH","Image",&hough_min_line_length,255);
-	createTrackbar("MAX LINE GAP","Image",&hough_max_line_gap,255);
+//    createTrackbar("THRESH","Image",&hough_thresh,255);
+//	createTrackbar("MIN LINE LENGTH","Image",&hough_min_line_length,255);
+//	createTrackbar("MAX LINE GAP","Image",&hough_max_line_gap,255);
 
 //    createTrackbar("CLOSE","Image",&CLOSE_THRESH,10000);
 //    createTrackbar("CLOSE-MED","Image",&CLOSE_MED_THRESH,10000);
@@ -195,11 +211,15 @@ int main(int argc, char **argv) {
     double tickFreq = getTickFrequency();
     double fps = 0;
 
+    int dummy = 1;
+	pthread_t t1;
+	pthread_create(&t1,NULL,task1, (void*)&zed);
+
     while (key != 'q') {
 
     	lastTick = getTickCount();
 
-        if (zed.grab(runtime_parameters) == SUCCESS) {
+        if (1){//zed.grab(runtime_parameters) == SUCCESS) {
 
             zed.retrieveImage(image_zed, VIEW_LEFT); // Retrieve the left image
             zed.retrieveImage(depth_image_zed, VIEW_DEPTH); // Retrieve the left image
@@ -247,40 +267,40 @@ int main(int argc, char **argv) {
 //			}
 
 
-//            inRange(depthImageRaw_ocv,Scalar((float)CLOSE_THRESH/1000),Scalar((float)CLOSE_MED_THRESH/1000),depthImageThreshCLOSE);	//0-2m
-//            inRange(depthImageRaw_ocv,Scalar((float)CLOSE_MED_THRESH/1000),Scalar((float)MED_FAR_THRESH/1000),depthImageThreshMEDIUM);	//0-2m
-//            inRange(depthImageRaw_ocv,Scalar((float)MED_FAR_THRESH/1000),Scalar((float)FAR_THRESH/1000),depthImageThreshFAR);	//0-2m
-//
-//            cv::line(depthImageThreshCLOSE,point12,point78,0,3);
-//			cv::line(depthImageThreshCLOSE,point23,point89,0,3);
-//			cv::line(depthImageThreshCLOSE,point14,point36,0,3);
-//			cv::line(depthImageThreshCLOSE,point47,point69,0,3);
-//			cv::line(depthImageThreshMEDIUM,point12,point78,Scalar(0),3);
-//			cv::line(depthImageThreshMEDIUM,point23,point89,Scalar(0),3);
-//			cv::line(depthImageThreshMEDIUM,point14,point36,Scalar(0),3);
-//			cv::line(depthImageThreshMEDIUM,point47,point69,Scalar(0),3);
-//			cv::line(depthImageThreshFAR,point12,point78,Scalar(0),3);
-//			cv::line(depthImageThreshFAR,point23,point89,Scalar(0),3);
-//			cv::line(depthImageThreshFAR,point14,point36,Scalar(0),3);
-//			cv::line(depthImageThreshFAR,point47,point69,Scalar(0),3);
-//
-//            cv::resize(depthImageThreshCLOSE, depthImageThreshCLOSE2, displaySize);
-//			cv::resize(depthImageThreshMEDIUM, depthImageThreshMEDIUM2, displaySize);
-//			cv::resize(depthImageThreshFAR, depthImageThreshFAR2, displaySize);
-//
-//			depthImageThreshMEDIUM_CROPPED = depthImageThreshMEDIUM(roiMEDIUM);
-//			depthImageThreshFAR_CROPPED = depthImageThreshFAR(roiFAR);
-//
-//            detectObjects(&depthImageThreshCLOSE,&image_ocv,TYPE_CLOSE);
-//			detectObjects(&depthImageThreshMEDIUM_CROPPED,&image_ocv,TYPE_MED);
-//			detectObjects(&depthImageThreshFAR_CROPPED,&image_ocv,TYPE_FAR);
-//
+            inRange(depthImageRaw_ocv,Scalar((float)CLOSE_THRESH/1000),Scalar((float)CLOSE_MED_THRESH/1000),depthImageThreshCLOSE);	//0-2m
+            inRange(depthImageRaw_ocv,Scalar((float)CLOSE_MED_THRESH/1000),Scalar((float)MED_FAR_THRESH/1000),depthImageThreshMEDIUM);	//0-2m
+            inRange(depthImageRaw_ocv,Scalar((float)MED_FAR_THRESH/1000),Scalar((float)FAR_THRESH/1000),depthImageThreshFAR);	//0-2m
+
+            cv::line(depthImageThreshCLOSE,point12,point78,0,3);
+			cv::line(depthImageThreshCLOSE,point23,point89,0,3);
+			cv::line(depthImageThreshCLOSE,point14,point36,0,3);
+			cv::line(depthImageThreshCLOSE,point47,point69,0,3);
+			cv::line(depthImageThreshMEDIUM,point12,point78,Scalar(0),3);
+			cv::line(depthImageThreshMEDIUM,point23,point89,Scalar(0),3);
+			cv::line(depthImageThreshMEDIUM,point14,point36,Scalar(0),3);
+			cv::line(depthImageThreshMEDIUM,point47,point69,Scalar(0),3);
+			cv::line(depthImageThreshFAR,point12,point78,Scalar(0),3);
+			cv::line(depthImageThreshFAR,point23,point89,Scalar(0),3);
+			cv::line(depthImageThreshFAR,point14,point36,Scalar(0),3);
+			cv::line(depthImageThreshFAR,point47,point69,Scalar(0),3);
+
+            cv::resize(depthImageThreshCLOSE, depthImageThreshCLOSE2, displaySize);
+			cv::resize(depthImageThreshMEDIUM, depthImageThreshMEDIUM2, displaySize);
+			cv::resize(depthImageThreshFAR, depthImageThreshFAR2, displaySize);
+
+			depthImageThreshMEDIUM_CROPPED = depthImageThreshMEDIUM(roiMEDIUM);
+			depthImageThreshFAR_CROPPED = depthImageThreshFAR(roiFAR);
+
+            detectObjects(&depthImageThreshCLOSE,&image_ocv,TYPE_CLOSE);
+			detectObjects(&depthImageThreshMEDIUM_CROPPED,&image_ocv,TYPE_MED);
+			detectObjects(&depthImageThreshFAR_CROPPED,&image_ocv,TYPE_FAR);
+
 			cv::line(image_ocv,point12,point78,Scalar(255,0,0),3);
 			cv::line(image_ocv,point23,point89,Scalar(255,0,0),3);
 			cv::line(image_ocv,point14,point36,Scalar(255,0,0),3);
 			cv::line(image_ocv,point47,point69,Scalar(255,0,0),3);
 
-            cv::resize(image_ocv, image_ocv_display, displaySize*2);
+            cv::resize(image_ocv, image_ocv_display, displaySize);
             imshow("Image", image_ocv_display);
 //            imshow("Line Thresh", image_ocv_hsv_thresh);
 //            imshow("Line", line_base_roi);
@@ -377,7 +397,7 @@ void detectObjects(cv::Mat* thresh_img, cv::Mat* orig_img, int type) {
 				color = Scalar(0,0,255);	//red
 				drawContours(*orig_img, contours, i, color, 5, 8, hierarchy, 0, Point());
 				cv::circle(*orig_img, mc[i], 50, color, 3, 8, 0);
-				std::cout << "***Critical Object Detected*** [x,y] = " << mc[i] << std::endl;
+//				std::cout << "***Critical Object Detected*** [x,y] = " << mc[i] << std::endl;
 			}
 			else if(type == TYPE_MED){
 				color = Scalar(0,106,255);
@@ -385,26 +405,26 @@ void detectObjects(cv::Mat* thresh_img, cv::Mat* orig_img, int type) {
 					color = Scalar(66,238,244);	//yellow
 					drawContours(*orig_img, contours, i, color, 5, 8, hierarchy, 0, Point());
 					cv::circle(*orig_img, mc[i], 50, color, 3, 8, 0);
-					std::cout << "***Low Threat Object Detected*** [x,y] = " << mc[i] << std::endl;
+//					std::cout << "***Low Threat Object Detected*** [x,y] = " << mc[i] << std::endl;
 				}
 				else if(x_pos < (((-(d2-d1)/(float)globalHeight)*y_pos) + ((float)globalWidth/2) - d1)){
 					color = Scalar(66,238,244);	//yellow
 					drawContours(*orig_img, contours, i, color, 5, 8, hierarchy, 0, Point());
 					cv::circle(*orig_img, mc[i], 50, color, 3, 8, 0);
-					std::cout << "***Low Threat Object Detected*** [x,y] = " << mc[i] << std::endl;
+//					std::cout << "***Low Threat Object Detected*** [x,y] = " << mc[i] << std::endl;
 				}
 				else{
 					color = Scalar(0,106,255);	//orange
 					drawContours(*orig_img, contours, i, color, 5, 8, hierarchy, 0, Point());
 					cv::circle(*orig_img, mc[i], 50, color, 3, 8, 0);
-					std::cout << "***High Threat Object Detected*** [x,y] = " << mc[i] << std::endl;
+//					std::cout << "***High Threat Object Detected*** [x,y] = " << mc[i] << std::endl;
 				}
 			}
 			else if(type == TYPE_FAR){
 				color = Scalar(0,255,0);
 				drawContours(*orig_img, contours, i, color, 5, 8, hierarchy, 0, Point());
 				cv::circle(*orig_img, mc[i], 50, color, 3, 8, 0);
-				std::cout << "***Potential Object Detected*** [x,y] = " << mc[i] << std::endl;
+//				std::cout << "***Potential Object Detected*** [x,y] = " << mc[i] << std::endl;
 			}
 		}
 	}
